@@ -16,18 +16,19 @@ app.get('/users',async(req,res)=>{
     }).then((data)=>{
         axios.get('http://20.244.56.144/test/users',{
             headers : { Authorization : `Bearer ${data.data.access_token}`}
-        }).then(data=>processTopFiveUsersData(data)).then(data=>res.json({}))
+        }).then(data=>processTopFiveUsersData(data)).then(data=>res.json({data : data}))
     });
     
 })
 
-function processTopFiveUsersData(data){
+async function processTopFiveUsersData(data){
 
 
     let userArray = [];
+    let count = data.data.users.length;
 
     for(let user in data.data.users){
-        axios.post('http://20.244.56.144/test/auth',{
+        await axios.post('http://20.244.56.144/test/auth',{
             "companyName": "karpagam",
             "clientID": "8458a852-6baf-47e3-8c89-bda3db97cbbd",
             "clientSecret": "ZDHqcbgNCKUmZhhA",
@@ -37,14 +38,12 @@ function processTopFiveUsersData(data){
         }).then((data)=>{
             axios.get(`http://20.244.56.144/test/users/${user}/posts`,{
                 headers : { Authorization : `Bearer ${data.data.access_token}`}
-            }).then(data=>userArray.push(data.data.posts.length));
+            }).then(data=>userArray.push([data.data.posts.length,user]));
         });
     }
 
-    console.log(userArray);
-
-    return "data";
-
+    userArray = userArray.sort((a,b)=>b[0]-a[0]).map(val=>val[1]).splice(5,userArray.length);
+    return userArray;
 }
 
 app.get('/posts',async(req,res)=>{
